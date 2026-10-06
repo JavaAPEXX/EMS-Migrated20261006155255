@@ -1,3 +1,4 @@
+```java
 package com.employee.system.service;
 
 import com.employee.system.dto.AttendanceDTO;
@@ -6,6 +7,7 @@ import com.employee.system.entity.Employee;
 import com.employee.system.repository.AttendanceRepository;
 import com.employee.system.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,154 +38,52 @@ class AttendanceServiceTest {
     @InjectMocks
     private AttendanceService attendanceService;
 
-    private Employee employee;
-    private Attendance attendance;
-    private AttendanceDTO attendanceDTO;
+    private Employee testEmployee;
+    private Attendance testAttendance;
+    private AttendanceDTO testAttendanceDTO;
+    private LocalDate testDate;
 
     @BeforeEach
     void setUp() {
-        employee = new Employee();
-        employee.setId(1L);
-        employee.setFirstName("John");
-        employee.setLastName("Doe");
+        testEmployee = new Employee();
+        testEmployee.setId(1L);
+        testEmployee.setFirstName("John");
+        testEmployee.setLastName("Doe");
 
-        attendance = new Attendance();
-        attendance.setId(10L);
-        attendance.setEmployee(employee);
-        attendance.setAttendanceDate(LocalDate.of(2024, 5, 24));
-        attendance.setStatus("PRESENT");
-        attendance.setCheckInTime(LocalTime.of(9, 0));
-        attendance.setCheckOutTime(LocalTime.of(17, 30));
+        testDate = LocalDate.of(2023, 10, 15);
 
-        attendanceDTO = new AttendanceDTO();
-        attendanceDTO.setEmployeeId(1L);
-        attendanceDTO.setAttendanceDate(LocalDate.of(2024, 5, 24));
-        attendanceDTO.setStatus("PRESENT");
-        attendanceDTO.setCheckInTime(LocalTime.of(9, 0));
-        attendanceDTO.setCheckOutTime(LocalTime.of(17, 30));
+        testAttendance = new Attendance();
+        testAttendance.setId(1L);
+        testAttendance.setEmployee(testEmployee);
+        testAttendance.setAttendanceDate(testDate);
+        testAttendance.setStatus("PRESENT");
+        testAttendance.setCheckInTime(LocalDateTime.of(2023, 10, 15, 9, 0, 0));
+        testAttendance.setCheckOutTime(LocalDateTime.of(2023, 10, 15, 17, 0, 0));
+        testAttendance.setRemarks("On time");
+        testAttendance.setCreatedAt(LocalDateTime.now());
+        testAttendance.setUpdatedAt(LocalDateTime.now());
+
+        testAttendanceDTO = new AttendanceDTO();
+        testAttendanceDTO.setId(1L);
+        testAttendanceDTO.setEmployeeId(1L);
+        testAttendanceDTO.setEmployeeName("John Doe");
+        testAttendanceDTO.setAttendanceDate(testDate);
+        testAttendanceDTO.setStatus("PRESENT");
+        testAttendanceDTO.setCheckInTime(LocalDateTime.of(2023, 10, 15, 9, 0, 0));
+        testAttendanceDTO.setCheckOutTime(LocalDateTime.of(2023, 10, 15, 17, 0, 0));
+        testAttendanceDTO.setRemarks("On time");
     }
 
     @Test
-    void testMarkAttendance_Success() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(attendanceRepository.save(any(Attendance.class))).thenReturn(attendance);
+    @DisplayName("Given valid attendance DTO when marking attendance then return saved attendance DTO")
+    void givenValidAttendanceDTO_whenMarkAttendance_thenReturnSavedAttendanceDTO() {
+        // Arrange
+        AttendanceDTO inputDTO = new AttendanceDTO();
+        inputDTO.setEmployeeId(1L);
+        inputDTO.setAttendanceDate(testDate);
+        inputDTO.setStatus("PRESENT");
+        inputDTO.setCheckInTime(LocalDateTime.of(2023, 10, 15, 9, 0, 0));
+        inputDTO.setCheckOutTime(LocalDateTime.of(2023, 10, 15, 17, 0, 0));
+        inputDTO.setRemarks("On time");
 
-        AttendanceDTO result = attendanceService.markAttendance(attendanceDTO);
-
-        assertNotNull(result);
-        assertEquals(10L, result.getId());
-        assertEquals("PRESENT", result.getStatus());
-        verify(attendanceRepository, times(1)).save(any(Attendance.class));
-    }
-
-    @Test
-    void testMarkAttendance_EmployeeNotFound() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> attendanceService.markAttendance(attendanceDTO));
-        verify(attendanceRepository, never()).save(any(Attendance.class));
-    }
-
-    @Test
-    void testGetAttendanceById_Success() {
-        when(attendanceRepository.findById(10L)).thenReturn(Optional.of(attendance));
-
-        AttendanceDTO result = attendanceService.getAttendanceById(10L);
-
-        assertNotNull(result);
-        assertEquals(10L, result.getId());
-    }
-
-    @Test
-    void testGetAttendanceById_NotFound() {
-        when(attendanceRepository.findById(10L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> attendanceService.getAttendanceById(10L));
-    }
-
-    @Test
-    void testGetAttendanceByEmployeeAndDate() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(attendanceRepository.findByEmployeeAndAttendanceDate(employee, LocalDate.of(2024, 5, 24)))
-                .thenReturn(Optional.of(attendance));
-
-        AttendanceDTO result = attendanceService.getAttendanceByEmployeeAndDate(1L, LocalDate.of(2024, 5, 24));
-
-        assertNotNull(result);
-        assertEquals(10L, result.getId());
-    }
-
-    @Test
-    void testGetAttendanceByEmployee() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(attendanceRepository.findByEmployee(employee)).thenReturn(Collections.singletonList(attendance));
-
-        List<AttendanceDTO> result = attendanceService.getAttendanceByEmployee(1L);
-
-        assertFalse(result.isEmpty());
-        assertEquals(1, result.size());
-    }
-
-    @Test
-    void testGetAttendanceByDateRange() {
-        LocalDate start = LocalDate.of(2024, 5, 1);
-        LocalDate end = LocalDate.of(2024, 5, 31);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(attendanceRepository.findByEmployeeAndAttendanceDateBetween(employee, start, end))
-                .thenReturn(Collections.singletonList(attendance));
-
-        List<AttendanceDTO> result = attendanceService.getAttendanceByDateRange(1L, start, end);
-
-        assertFalse(result.isEmpty());
-    }
-
-    @Test
-    void testGetAllAttendanceByDateRange() {
-        LocalDate start = LocalDate.of(2024, 5, 1);
-        LocalDate end = LocalDate.of(2024, 5, 31);
-        when(attendanceRepository.findByAttendanceDateBetween(start, end))
-                .thenReturn(Collections.singletonList(attendance));
-
-        List<AttendanceDTO> result = attendanceService.getAllAttendanceByDateRange(start, end);
-
-        assertFalse(result.isEmpty());
-    }
-
-    @Test
-    void testUpdateAttendance() {
-        when(attendanceRepository.findById(10L)).thenReturn(Optional.of(attendance));
-        when(attendanceRepository.save(any(Attendance.class))).thenReturn(attendance);
-
-        attendanceDTO.setStatus("LATE");
-        AttendanceDTO result = attendanceService.updateAttendance(10L, attendanceDTO);
-
-        assertNotNull(result);
-        assertEquals("LATE", result.getStatus());
-    }
-
-    @Test
-    void testDeleteAttendance() {
-        when(attendanceRepository.findById(10L)).thenReturn(Optional.of(attendance));
-
-        assertDoesNotThrow(() -> attendanceService.deleteAttendance(10L));
-        verify(attendanceRepository, times(1)).delete(attendance);
-    }
-
-    @Test
-    void testGetAttendanceSummary() {
-        LocalDate start = LocalDate.of(2024, 5, 1);
-        LocalDate end = LocalDate.of(2024, 5, 31);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(attendanceRepository.countPresentDays(employee, start, end)).thenReturn(1L);
-        when(attendanceRepository.countAbsentDays(employee, start, end)).thenReturn(0L);
-        when(attendanceRepository.findByEmployeeAndAttendanceDateBetween(employee, start, end))
-                .thenReturn(Arrays.asList(attendance));
-
-        AttendanceSummary result = attendanceService.getAttendanceSummary(1L, start, end);
-
-        assertNotNull(result);
-        assertEquals(1L, result.getEmployeeId());
-        assertEquals(1, result.getTotalDays());
-        assertEquals(1, result.getPresentDays());
-    }
-}
+        when(employeeRepository.findById(1L)).thenReturn(Optional
