@@ -38,41 +38,49 @@ class AttendanceServiceTest {
     @InjectMocks
     private AttendanceService attendanceService;
 
-    private Employee testEmployee;
-    private Attendance testAttendance;
-    private AttendanceDTO testAttendanceDTO;
+    private Employee employee;
+    private Attendance attendance;
+    private AttendanceDTO attendanceDTO;
     private LocalDate testDate;
+    private LocalDateTime testCheckInTime;
+    private LocalDateTime testCheckOutTime;
 
     @BeforeEach
     void setUp() {
-        testEmployee = new Employee();
-        testEmployee.setId(1L);
-        testEmployee.setFirstName("John");
-        testEmployee.setLastName("Doe");
+        employee = new Employee();
+        employee.setId(1L);
+        employee.setFirstName("John");
+        employee.setLastName("Doe");
 
-        testDate = LocalDate.of(2023, 10, 15);
+        testDate = LocalDate.of(2023, 10, 25);
+        testCheckInTime = LocalDateTime.of(2023, 10, 25, 9, 0, 0);
+        testCheckOutTime = LocalDateTime.of(2023, 10, 25, 17, 0, 0);
 
-        testAttendance = new Attendance();
-        testAttendance.setId(1L);
-        testAttendance.setEmployee(testEmployee);
-        testAttendance.setAttendanceDate(testDate);
-        testAttendance.setStatus("PRESENT");
-        testAttendance.setCheckInTime(LocalDateTime.of(2023, 10, 15, 9, 0, 0));
-        testAttendance.setCheckOutTime(LocalDateTime.of(2023, 10, 15, 17, 0, 0));
-        testAttendance.setRemarks("On time");
-        testAttendance.setCreatedAt(LocalDateTime.now());
-        testAttendance.setUpdatedAt(LocalDateTime.now());
+        attendance = new Attendance();
+        attendance.setId(1L);
+        attendance.setEmployee(employee);
+        attendance.setAttendanceDate(testDate);
+        attendance.setStatus("PRESENT");
+        attendance.setCheckInTime(testCheckInTime);
+        attendance.setCheckOutTime(testCheckOutTime);
+        attendance.setRemarks("On time");
+        attendance.setCreatedAt(LocalDateTime.now());
+        attendance.setUpdatedAt(LocalDateTime.now());
 
-        testAttendanceDTO = new AttendanceDTO();
-        testAttendanceDTO.setId(1L);
-        testAttendanceDTO.setEmployeeId(1L);
-        testAttendanceDTO.setEmployeeName("John Doe");
-        testAttendanceDTO.setAttendanceDate(testDate);
-        testAttendanceDTO.setStatus("PRESENT");
-        testAttendanceDTO.setCheckInTime(LocalDateTime.of(2023, 10, 15, 9, 0, 0));
-        testAttendanceDTO.setCheckOutTime(LocalDateTime.of(2023, 10, 15, 17, 0, 0));
-        testAttendanceDTO.setRemarks("On time");
+        attendanceDTO = new AttendanceDTO();
+        attendanceDTO.setId(1L);
+        attendanceDTO.setEmployeeId(1L);
+        attendanceDTO.setEmployeeName("John Doe");
+        attendanceDTO.setAttendanceDate(testDate);
+        attendanceDTO.setStatus("PRESENT");
+        attendanceDTO.setCheckInTime(testCheckInTime);
+        attendanceDTO.setCheckOutTime(testCheckOutTime);
+        attendanceDTO.setRemarks("On time");
+        attendanceDTO.setCreatedAt(LocalDateTime.now());
+        attendanceDTO.setUpdatedAt(LocalDateTime.now());
     }
+
+    // --- markAttendance Tests ---
 
     @Test
     @DisplayName("Given valid attendance DTO when marking attendance then return saved attendance DTO")
@@ -82,8 +90,12 @@ class AttendanceServiceTest {
         inputDTO.setEmployeeId(1L);
         inputDTO.setAttendanceDate(testDate);
         inputDTO.setStatus("PRESENT");
-        inputDTO.setCheckInTime(LocalDateTime.of(2023, 10, 15, 9, 0, 0));
-        inputDTO.setCheckOutTime(LocalDateTime.of(2023, 10, 15, 17, 0, 0));
+        inputDTO.setCheckInTime(testCheckInTime);
+        inputDTO.setCheckOutTime(testCheckOutTime);
         inputDTO.setRemarks("On time");
 
-        when(employeeRepository.findById(1L)).thenReturn(Optional
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(attendanceRepository.save(any(Attendance.class))).thenAnswer(invocation -> {
+            Attendance att = invocation.getArgument(0);
+            att.setId(1L);
+            att.setCreatedAt
